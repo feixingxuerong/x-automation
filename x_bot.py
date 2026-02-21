@@ -262,6 +262,95 @@ class XAutomation:
             print(f"❌ 回复失败: {e}")
             return False
     
+    async def get_notifications(self, count: int = 10) -> list:
+        """获取通知"""
+        try:
+            await self.page.goto("https://x.com/notifications", timeout=15000)
+            await self.page.wait_for_timeout(8000)
+            
+            articles = await self.page.query_selector_all('article')
+            results = []
+            
+            for article in articles[:count]:
+                try:
+                    # 获取用户名
+                    name_elem = await article.query_selector('[data-testid="User-Name"]')
+                    username_elem = await article.query_selector('[dir="ltr"]')
+                    
+                    # 获取内容
+                    text_elem = await article.query_selector('[data-testid="tweetText"]')
+                    
+                    # 获取头像链接
+                    avatar = await article.query_selector('[data-testid="UserAvatar"]')
+                    
+                    name = await name_elem.inner_text() if name_elem else ''
+                    username = await username_elem.inner_text() if username_elem else ''
+                    text = await text_elem.inner_text() if text_elem else ''
+                    
+                    # 提取用户名（去掉多余信息）
+                    if '@' in username:
+                        username = username.split('@')[-1].split()[0]
+                    elif '·' in username:
+                        username = username.split('·')[0].strip()
+                    
+                    # 判断通知类型
+                    notif_type = 'other'
+                    if 'liked' in username.lower():
+                        notif_type = 'like'
+                    elif 'replied' in username.lower() or '回复' in text:
+                        notif_type = 'reply'
+                    elif 'followed' in username.lower():
+                        notif_type = 'follow'
+                    
+                    results.append({
+                        'type': notif_type,
+                        'user': username,
+                        'text': text,
+                        'element': article
+                    })
+                except:
+                    pass
+            
+            print(f"📬 获取到 {len(results)} 条通知")
+            return results
+        except Exception as e:
+            print(f"❌ 获取通知失败: {e}")
+            return []
+    
+    async def reply_to_notification(self, notification, reply_text: str) -> bool:
+        """回复通知中的推文"""
+        try:
+            # 点击通知进入详情
+            article = notification.get('element')
+            if article:
+                await article.click()
+                await self.page.wait_for_timeout(5000)
+                
+                # 点击回复按钮
+                reply_btn = await self.page.query_selector('[data-testid="reply"]')
+                if reply_btn:
+                    await reply_btn.click()
+                    await self.page.wait_for_timeout(3000)
+                    
+                    # 输入回复
+                    await self.page.click('[data-testid="tweetTextarea_0"]')
+                    await self.page.wait_for_timeout(1500)
+                    await self.page.type('[data-testid="tweetTextarea_0"]', reply_text, delay=100)
+                    await self.page.wait_for_timeout(2000)
+                    
+                    # 发送
+                    send_btn = await self.page.query_selector('[data-testid="tweetButton"]')
+                    if send_btn:
+                        await send_btn.click()
+                        await self.page.wait_for_timeout(5000)
+                        print(f"✅ 已回复 @{notification['user']}: {reply_text[:30]}...")
+                        return True
+            
+            return False
+        except Exception as e:
+            print(f"❌ 回复失败: {e}")
+            return False
+    
     async def get_mentions(self, count: int = 10) -> list:
         """获取@我的提及"""
         try:
