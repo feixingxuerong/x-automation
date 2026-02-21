@@ -87,12 +87,23 @@ class XAutomation:
     async def post_tweet(self, text: str) -> bool:
         """发布推文"""
         try:
+            # 点击发推按钮打开弹窗
             await self.page.click('[data-testid="SideNav_NewTweet_Button"]')
-            await self.page.wait_for_timeout(1000)
-            await self.page.fill('[contenteditable="true"]', text)
-            await self.page.wait_for_timeout(500)
-            await self.page.click('[data-testid="tweetButton"]')
-            await self.page.wait_for_timeout(2000)
+            await self.page.wait_for_timeout(3000)
+            
+            # 先点击输入框聚焦
+            await self.page.click('[data-testid="tweetTextarea_0"]')
+            await self.page.wait_for_timeout(1500)
+            
+            # 用 type 输入内容（比 fill 更可靠）
+            await self.page.type('[data-testid="tweetTextarea_0"]', text, delay=100)
+            await self.page.wait_for_timeout(3000)
+            
+            # 等待发送按钮出现并点击
+            btn = await self.page.wait_for_selector('[data-testid="tweetButton"]', timeout=5000)
+            await btn.click()
+            await self.page.wait_for_timeout(5000)
+            
             print(f"✅ 推文已发布: {text[:50]}...")
             return True
         except Exception as e:
