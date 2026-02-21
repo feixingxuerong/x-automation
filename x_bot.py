@@ -227,6 +227,72 @@ class XAutomation:
             print(f"❌ 取消关注失败: {e}")
             return False
     
+    async def reply_to_tweet(self, tweet_url: str, reply_text: str) -> bool:
+        """回复推文"""
+        try:
+            # 访问推文页面
+            await self.page.goto(tweet_url, timeout=15000)
+            await self.page.wait_for_timeout(5000)
+            
+            # 点击回复按钮
+            reply_btn = await self.page.query_selector('[data-testid="reply"]')
+            if reply_btn:
+                await reply_btn.click()
+                await self.page.wait_for_timeout(3000)
+                
+                # 点击输入框聚焦
+                await self.page.click('[data-testid="tweetTextarea_0"]')
+                await self.page.wait_for_timeout(1500)
+                
+                # 输入回复内容
+                await self.page.type('[data-testid="tweetTextarea_0"]', reply_text, delay=100)
+                await self.page.wait_for_timeout(2000)
+                
+                # 点击发送
+                send_btn = await self.page.query_selector('[data-testid="tweetButton"]')
+                if send_btn:
+                    await send_btn.click()
+                    await self.page.wait_for_timeout(5000)
+                    print(f"✅ 已回复: {reply_text[:30]}...")
+                    return True
+            
+            print("❌ 未找到回复按钮")
+            return False
+        except Exception as e:
+            print(f"❌ 回复失败: {e}")
+            return False
+    
+    async def get_mentions(self, count: int = 10) -> list:
+        """获取@我的提及"""
+        try:
+            await self.page.goto("https://x.com/i/connect", timeout=15000)
+            await self.page.wait_for_timeout(5000)
+            
+            # 获取提及列表
+            mentions = await self.page.query_selector_all('[data-testid="cellInnerDiv"]')
+            results = []
+            
+            for mention in mentions[:count]:
+                try:
+                    user_elem = await mention.query_selector('[dir="ltr"]')
+                    text_elem = await mention.query_selector('[data-testid="tweetText"]')
+                    
+                    user = await user_elem.inner_text() if user_elem else ''
+                    text = await text_elem.inner_text() if text_elem else ''
+                    
+                    if user or text:
+                        results.append({
+                            'user': user,
+                            'text': text
+                        })
+                except:
+                    pass
+            
+            return results
+        except Exception as e:
+            print(f"❌ 获取提及失败: {e}")
+            return []
+    
     async def close(self):
         """关闭浏览器"""
         if self.browser:
