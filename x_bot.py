@@ -173,6 +173,60 @@ class XAutomation:
             print(f"❌ 转推失败: {e}")
             return False
     
+    async def follow_user(self, username: str) -> bool:
+        """关注用户"""
+        try:
+            # 访问用户主页
+            await self.page.goto(f"https://x.com/{username}", timeout=15000)
+            await self.page.wait_for_timeout(5000)
+            
+            # 点击关注按钮
+            follow_btn = await self.page.query_selector('[data-testid*="follow"]')
+            if follow_btn:
+                await follow_btn.click()
+                await self.page.wait_for_timeout(2000)
+                print(f"✅ 已关注 @{username}")
+                return True
+            else:
+                # 可能已经关注了，找取消关注按钮
+                unfollow_btn = await self.page.query_selector('[data-testid*="unfollow"]')
+                if unfollow_btn:
+                    print(f"⚠️ 已关注 @{username}")
+                    return True
+                print(f"❌ 未找到关注按钮")
+                return False
+        except Exception as e:
+            print(f"❌ 关注失败: {e}")
+            return False
+    
+    async def unfollow_user(self, username: str) -> bool:
+        """取消关注用户"""
+        try:
+            # 访问用户主页
+            await self.page.goto(f"https://x.com/{username}", timeout=15000)
+            await self.page.wait_for_timeout(5000)
+            
+            # 点击取消关注按钮
+            unfollow_btn = await self.page.query_selector('[data-testid*="unfollow"]')
+            if unfollow_btn:
+                await unfollow_btn.click()
+                await self.page.wait_for_timeout(1000)
+                
+                # 确认取消关注
+                confirm_btn = await self.page.query_selector('[data-testid*="confirmUnfollow"]')
+                if confirm_btn:
+                    await confirm_btn.click()
+                    await self.page.wait_for_timeout(2000)
+                
+                print(f"✅ 已取消关注 @{username}")
+                return True
+            else:
+                print(f"⚠️ 未找到取消关注按钮（可能未关注）")
+                return False
+        except Exception as e:
+            print(f"❌ 取消关注失败: {e}")
+            return False
+    
     async def close(self):
         """关闭浏览器"""
         if self.browser:
