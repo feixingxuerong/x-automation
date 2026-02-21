@@ -34,8 +34,8 @@ metadata: {"openclaw": {"requires": {"bins": ["python3"], "pip": ["playwright"]}
 
 - 使用爸爸提供的 Cookies 登录
 - 无头模式运行（服务器环境）
- x_cookies.json反机器人限制可能有- 需要先有，被 文件
-- X限制后需要等待一段时间
+- 需要先有 x_cookies.json 文件
+- X 可能有反机器人限制，被限制后需要等待一段时间
 
 ## 项目位置
 
@@ -46,14 +46,14 @@ metadata: {"openclaw": {"requires": {"bins": ["python3"], "pip": ["playwright"]}
 ```
 x-automation/
 ├── x_bot.py        # 主程序
-├── x_cookies.json # 登录Cookies（ README.md      #爸爸提供）
-├── 项目文档
+├── x_cookies.json # 登录Cookies（爸爸提供）
+├── README.md      # 项目文档
 └── requirements.txt
 ```
 
-## 技术
+## 技术细节
 
-### 发细节推成功的方法
+### 发推成功的方法
 1. 点击侧边栏发推按钮 `[data-testid="SideNav_NewTweet_Button"]`
 2. 点击输入框聚焦 `[data-testid="tweetTextarea_0"]`
 3. 用 `type()` 输入内容（比 `fill()` 更可靠）
