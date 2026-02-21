@@ -326,25 +326,30 @@ class XAutomation:
                 await article.click()
                 await self.page.wait_for_timeout(5000)
                 
-                # 点击回复按钮
+                # 点击回复按钮 (data-testid="reply")
                 reply_btn = await self.page.query_selector('[data-testid="reply"]')
                 if reply_btn:
                     await reply_btn.click()
                     await self.page.wait_for_timeout(3000)
-                    
-                    # 输入回复
-                    await self.page.click('[data-testid="tweetTextarea_0"]')
-                    await self.page.wait_for_timeout(1500)
-                    await self.page.type('[data-testid="tweetTextarea_0"]', reply_text, delay=100)
-                    await self.page.wait_for_timeout(2000)
-                    
-                    # 发送
-                    send_btn = await self.page.query_selector('[data-testid="tweetButton"]')
-                    if send_btn:
-                        await send_btn.click()
-                        await self.page.wait_for_timeout(5000)
-                        print(f"✅ 已回复 @{notification['user']}: {reply_text[:30]}...")
-                        return True
+                
+                # 点击输入框聚焦
+                await self.page.click('[data-testid="tweetTextarea_0"]')
+                await self.page.wait_for_timeout(1500)
+                
+                # 输入回复内容
+                await self.page.type('[data-testid="tweetTextarea_0"]', reply_text, delay=100)
+                await self.page.wait_for_timeout(2000)
+                
+                # 用鼠标点击发送按钮
+                send_btn = await self.page.query_selector('[data-testid="tweetButtonInline"]')
+                if send_btn:
+                    box = await send_btn.bounding_box()
+                    if box:
+                        await self.page.mouse.click(box['x'] + box['width']/2, box['y'] + box['height']/2)
+                
+                await self.page.wait_for_timeout(5000)
+                print(f"✅ 已回复 @{notification['user']}: {reply_text[:30]}...")
+                return True
             
             return False
         except Exception as e:
