@@ -327,35 +327,21 @@ class XAutomation:
                 await self.page.wait_for_timeout(5000)
                 
                 # 下滑找到评论
-                await self.page.evaluate('window.scrollBy(0, 300)')
+                await self.page.evaluate('window.scrollBy(0, 350)')
                 await self.page.wait_for_timeout(2000)
                 
-                # 获取所有评论
-                articles = await self.page.query_selector_all('article')
-                
-                # 找到对应用户的评论
-                target_article = None
-                username = notification.get('user', '')
-                
-                for art in articles:
-                    try:
-                        text = await art.inner_text()
-                        if username in text or '青涩小猫' in text:
-                            target_article = art
-                            break
-                    except:
-                        pass
-                
-                if target_article:
-                    # 下滑确保评论可见
-                    await self.page.evaluate('window.scrollBy(0, 200)')
-                    await self.page.wait_for_timeout(1000)
-                    
-                    # 点击评论的回复按钮
-                    reply_btn = await target_article.query_selector('[data-testid="reply"]')
-                    if reply_btn:
-                        await reply_btn.click()
-                        await self.page.wait_for_timeout(3000)
+                # 用JS点击评论下方的reply按钮
+                await self.page.evaluate('''
+                    () => {
+                        const buttons = document.querySelectorAll('[data-testid="reply"]');
+                        if (buttons.length > 1) {
+                            buttons[1].click();
+                        } else if (buttons.length > 0) {
+                            buttons[0].click();
+                        }
+                    }
+                ''')
+                await self.page.wait_for_timeout(3000)
                 
                 # 输入回复内容
                 await self.page.click('[data-testid="tweetTextarea_0"]')
@@ -363,7 +349,7 @@ class XAutomation:
                 await self.page.type('[data-testid="tweetTextarea_0"]', reply_text, delay=100)
                 await self.page.wait_for_timeout(2000)
                 
-                # 点击发送 - 用 JS 点击 Reply 按钮
+                # 点击输入窗口的 Reply 按钮发送
                 await self.page.evaluate('document.querySelector(\'[data-testid="tweetButtonInline"]\').click()')
                 
                 await self.page.wait_for_timeout(5000)
